@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcribr</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Transcribr</h1>
+        <p class="subtitle">Upload a Zoom recording to get a transcription and screenshots.</p>
+
+        <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+            <div class="form-group">
+                <label for="video">Video file (.mp4)</label>
+                <input type="file" id="video" name="video" accept=".mp4" required>
+            </div>
+            <div class="form-group">
+                <label for="audio">Audio file (.m4a)</label>
+                <input type="file" id="audio" name="audio" accept=".m4a" required>
+            </div>
+            <button type="submit" class="btn">Upload &amp; Process</button>
+        </form>
+
+        {% if jobs %}
+        <h2>Job History</h2>
+        <table class="job-table">
+            <thead>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Video File</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr onclick="window.location='/job/{{ job.id }}'">
+                    <td><code>{{ job.id }}</code></td>
+                    <td>{{ job.video_filename }}</td>
+                    <td>{{ job.created_at[:16] }}</td>
+                    <td><span class="status status-{{ job.status }}">{{ job.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>

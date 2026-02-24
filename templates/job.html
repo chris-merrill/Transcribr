@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job {{ job.id }} - Transcribr</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="back-link">&larr; Back</a>
+            <h1>Job <code>{{ job.id }}</code></h1>
+            <p class="meta">{{ job.video_filename }} &mdash; {{ job.created_at[:16] }}</p>
+        </header>
+
+        {% if job.status in ['queued', 'processing'] %}
+        <div class="progress-section" id="progress-section">
+            <div class="spinner"></div>
+            <p id="progress-message">Connecting...</p>
+        </div>
+        {% endif %}
+
+        {% if job.status == 'error' %}
+        <div class="error-banner">
+            <strong>Error:</strong> {{ job.error }}
+        </div>
+        {% endif %}
+
+        <div class="actions" id="actions" style="{% if job.status != 'complete' %}display:none{% endif %}">
+            <a href="/job/{{ job.id }}/download" class="btn">Download ZIP</a>
+        </div>
+
+        <div class="results" id="results" style="{% if job.status != 'complete' %}display:none{% endif %}">
+            <div class="transcript-panel">
+                <h2>Transcript</h2>
+                <pre id="transcript">{{ transcript }}</pre>
+            </div>
+            <div class="screenshots-panel">
+                <h2>Screenshots</h2>
+                <div class="screenshot-grid" id="screenshot-grid">
+                    {% if job.screenshots %}
+                    {% for shot in job.screenshots %}
+                    <div class="screenshot-card">
+                        <img src="/job/{{ job.id }}/screenshots/{{ shot.filename }}" alt="{{ shot.filename }}">
+                        <span class="timestamp">{{ '%02d:%02d:%02d' % (shot.seconds // 3600, (shot.seconds % 3600) // 60, shot.seconds % 60) }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if job.status in ['queued', 'processing'] %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const jobId = "{{ job.id }}";
+
+        socket.on("connect", () => {
+            socket.emit("join", { job_id: jobId });
+            document.getElementById("progress-message").textContent = "Waiting for processing to start...";
+        });
+
+        socket.on("progress", (data) => {
+            if (data.job_id === jobId) {
+                document.getElementById("progress-message").textContent = data.message;
+            }
+        });
+
+        socket.on("complete", (data) => {
+            if (data.job_id === jobId) {
+                window.location.reload();
+            }
+        });
+
+        socket.on("error", (data) => {
+            if (data.job_id === jobId) {
+                document.getElementById("progress-message").textContent = "Error: " + data.message;
+                document.querySelector(".spinner").style.display = "none";
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
