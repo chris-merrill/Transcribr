@@ -1,4 +1,7 @@
 import os
+import certifi
+os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+
 import json
 import uuid
 import zipfile
@@ -180,4 +183,4 @@ def handle_join(data):
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=5000)
+    socketio.run(app, debug=True, port=5001, allow_unsafe_werkzeug=True)
