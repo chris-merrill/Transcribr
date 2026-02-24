@@ -3,3 +3,4 @@ flask-socketio==5.5.*
 openai-whisper
 Pillow
 imagehash
+pytest
